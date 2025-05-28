@@ -2,8 +2,8 @@ import Layout from '@/components/Layout';
 import './globals.css';
 
 export const metadata = {
-  title: 'Raft',
-  description: 'Building the future of banking',
+  title: 'CSW',
+  description: 'Building the future of Education',
 };
 
 export default function RootLayout({ children }) {
