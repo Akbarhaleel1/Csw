@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import { useIsMobile } from '../../../../libs/useIsMobile';
 import { 
   Wrapper, 
@@ -18,16 +19,28 @@ import {
   ImageSection,
   BackgroundOverlay
 } from './styles';
+import { useRouter } from 'next/navigation';
+
+// Create axios instance with base URL
+const api = axios.create({
+  baseURL: 'http://localhost:3001',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 const OTPVerification = () => {
   const isMobile = useIsMobile();
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(['', '', '', '']);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendDisabled, setResendDisabled] = useState(true);
   const [timer, setTimer] = useState(30);
   const inputRefs = useRef([]);
+
+      const router = useRouter();
+  
 
   // Handle OTP input change
   const handleChange = (index, value) => {
@@ -38,7 +51,7 @@ const OTPVerification = () => {
       setError('');
 
       // Auto focus to next input
-      if (value && index < 5) {
+      if (value && index < 3) {
         inputRefs.current[index + 1].focus();
       }
     }
@@ -47,7 +60,7 @@ const OTPVerification = () => {
   // Handle paste OTP
   const handlePaste = (e) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData('text/plain').slice(0, 6);
+    const pasteData = e.clipboardData.getData('text/plain').slice(0, 4);
     if (/^\d+$/.test(pasteData)) {
       const newOtp = [...otp];
       for (let i = 0; i < pasteData.length; i++) {
@@ -65,45 +78,58 @@ const OTPVerification = () => {
     }
   };
 
-  // Verify OTP
+  // Verify OTP by sending to your backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     const otpValue = otp.join('');
 
-    if (otpValue.length !== 6) {
-      setError('Please enter a 6-digit OTP');
+    if (otpValue.length !== 4) {
+      setError('Please enter a 4-digit OTP');
       return;
     }
 
     setIsLoading(true);
     setError('');
+    setSuccess('');
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log('OTP submitted:', otpValue);
-      setIsLoading(false);
-      
-      // For demo purposes - assume OTP is 123456
-      if (otpValue === '123456') {
-        setSuccess('Verification successful! Redirecting...');
-        // In a real app, you would redirect here
-      } else {
-        setError('Invalid OTP. Please try again.');
+    try {
+      const response = await api.post('/verify-otp', { otp: otpValue });
+      setSuccess(response.data.message || 'Verification successful! Redirecting...');
+      console.log('response', response)
+      // You can redirect here if needed
+      if (response.status == '200') {
+      router.push('/');
       }
-    }, 1500);
+    } catch (err) {
+      setError(
+        err.response?.data?.error || 
+        err.message || 
+        'Invalid OTP. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Handle resend OTP
-  const handleResendOTP = () => {
+  // Handle resend OTP by calling your backend
+  const handleResendOTP = async () => {
     setResendDisabled(true);
     setTimer(30);
-    setOtp(['', '', '', '', '', '']);
+    setOtp(['', '', '', '']);
     setError('');
-    setSuccess('New OTP has been sent to your mobile number');
+    setSuccess('');
     
-    // Simulate API call to resend OTP
-    console.log('Resending OTP...');
-    inputRefs.current[0].focus();
+    try {
+      const response = await api.post('/otp/resend');
+      setSuccess(response.data.message || 'New OTP has been sent to your email');
+      inputRefs.current[0].focus();
+    } catch (err) {
+      setError(
+        err.response?.data?.error || 
+        err.message || 
+        'Failed to resend OTP. Please try again.'
+      );
+    }
   };
 
   // Countdown timer for resend OTP
@@ -154,7 +180,7 @@ const OTPVerification = () => {
         >
           <Title>OTP Verification</Title>
           <Subtitle>
-We've sent a 6-digit code to <strong>s•••••e@example.com</strong>
+            We've sent a 4-digit code to <strong>s•••••e@example.com</strong>
           </Subtitle>
           
           {error && (
@@ -177,7 +203,7 @@ We've sent a 6-digit code to <strong>s•••••e@example.com</strong>
           
           <form onSubmit={handleSubmit}>
             <OTPContainer>
-              {Array.from({ length: 6 }).map((_, index) => (
+              {Array.from({ length: 4 }).map((_, index) => (
                 <OTPInput
                   key={index}
                   type="tel"
