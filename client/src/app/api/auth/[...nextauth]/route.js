@@ -11,11 +11,11 @@ export const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.error("Missing email or password");
-          return null;
+          throw new Error("Email and password are required");
         }
 
         try {
+          console.log('next auth is working')
           const res = await fetch("http://localhost:3001/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -24,30 +24,25 @@ export const authOptions = {
               password: credentials.password,
             }),
           });
-
+          console.log('ressssssss is', res)
           const response = await res.json();
 
           if (!res.ok) {
-            console.error("Login failed:", response.message || res.statusText);
-            return null;
+            throw new Error(response.message || "Authentication failed");
           }
 
-          const user = response.data;
-
-          if (user && user._id) {
-            return {
-              id: typeof user._id === "object" && user._id.toString
-                ? user._id.toString()
-                : String(user._id),
-              email: user.email || "",
-            };
+          if (!response.user) {
+            throw new Error("Invalid user data received");
           }
 
-          console.error("Invalid user structure in response");
-          return null;
+          return {
+            id: response.user._id,
+            email: response.user.email,
+            name: response.user.name,
+            accessToken: response.accessToken // Store the JWT from your backend
+          };
         } catch (error) {
-          console.error("Authorization error:", error);
-          return null;
+          throw new Error(error instanceof Error ? error.message : "Authentication failed");
         }
       },
     }),
@@ -55,6 +50,7 @@ export const authOptions = {
 
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours
   },
 
   callbacks: {
@@ -62,6 +58,7 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
+        token.accessToken = user.accessToken; // Store the backend JWT
       }
       return token;
     },
@@ -69,14 +66,15 @@ export const authOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
-        session.user.email = token.email;
+        session.user.accessToken = token.accessToken; // Make JWT available to client
       }
       return session;
     },
   },
 
   pages: {
-    signIn: "/signup",
+    signIn: "/login",
+    error: "/login",
   },
 
   debug: process.env.NODE_ENV === "development",

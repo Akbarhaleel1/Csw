@@ -24,9 +24,13 @@ import {
   InputRow,
   CountryCodeInput
 } from './styles';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 const Signup = () => {
   const isMobile = useIsMobile();
+  const router = useRouter();
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -35,18 +39,21 @@ const Signup = () => {
     mobile: '',
     password: ''
   });
+  
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
+    // Clear any API errors when user starts typing
+    if (apiError) setApiError('');
+    
     // Special handling for country code
     if (name === 'countryCode') {
-      // Only allow numbers and + at the start
       const sanitizedValue = value.replace(/[^0-9+]/g, '');
-      // Ensure it starts with + and has max 4 digits after +
       const formattedValue = sanitizedValue.startsWith('+') 
         ? '+' + sanitizedValue.slice(1).replace(/[^0-9]/g, '').slice(0, 4)
         : '+' + sanitizedValue.replace(/[^0-9]/g, '').slice(0, 4);
@@ -62,7 +69,7 @@ const Signup = () => {
       }));
     }
     
-    // Clear error when user starts typing
+    // Clear field error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -116,26 +123,44 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setApiError('');
     
     if (!validateForm()) return;
     
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const completeFormData = {
-        ...formData,
-        fullMobile: `${formData.countryCode}${formData.mobile}`
-      };
-      console.log('Signup Data:', completeFormData);
-      setIsLoading(false);
-      setShowSuccess(true);
+    const userData = {
+      firstname: formData.firstName,
+      lastname: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      phonenumber: `${formData.countryCode}${formData.mobile}`,
+      role: 'student' 
+    };
+
+    try {
+      const response = await axios.post('http://localhost:3001/signup', { userData });
       
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 3000);
-    }, 1500);
+      if (response.status === 200) {
+        setShowSuccess(true);
+        router.push('/otp'); 
+      }
+    } catch (error) {
+      if (error.response) {
+        // Handle 400 Bad Request (user already exists)
+        if (error.response.status === 400) {
+          setApiError('This email is already registered. Please sign in instead.');
+        } else {
+          setApiError(error.response.data.message || 'Registration failed. Please try again.');
+        }
+      } else if (error.request) {
+        setApiError('Network error. Please check your connection and try again.');
+      } else {
+        setApiError('An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const formVariants = {
@@ -172,6 +197,16 @@ const Signup = () => {
           animate="visible"
         >
           <Title>Create Account</Title>
+          
+          {apiError && (
+            <ErrorMessage
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{ marginBottom: '1rem' }}
+            >
+              {apiError}
+            </ErrorMessage>
+          )}
           
           {showSuccess && (
             <SuccessMessage
@@ -233,7 +268,7 @@ const Signup = () => {
                 whileFocus="focus"
                 whileBlur="blur"
                 placeholder="Enter your email"
-                $hasError={!!errors.email}
+                $hasError={!!errors.email || !!apiError}
               />
               {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
             </InputGroup>
@@ -323,4 +358,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default Signup; 
