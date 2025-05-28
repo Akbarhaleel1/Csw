@@ -1,89 +1,113 @@
 import Image from 'next/image';
-import raft_footer_logo from '../../../../public/svgs/raft_footer_logo.svg';
-import qr_code from '../../../../public/svgs/qr_code.svg';
-import ic_google_playstore from '../../../../public/svgs/ic_google_playstore.svg';
-import ic_baseline_apple from '../../../../public/svgs/ic_baseline_apple.svg';
-import ic_chevron_down from '../../../../public/svgs/ic_chevron_down.svg';
-import ic_copyright from '../../../../public/svgs/ic_copyright.svg';
-
-const linksArr = [
-  {
-    title: 'About us',
-    links: ['Our Company', 'Careers', 'Press kits'],
-  },
-  {
-    title: 'Legal',
-    links: ['Terms of use', 'Privacy policy', 'About us'],
-  },
-  {
-    title: 'About us',
-    links: ['Contact us', 'FAQ'],
-  },
-];
-
+import csw_logo_footer from '../../../../public/images/csw-logo_footer.png';
+import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import {
   Wrapper,
   Inner,
-  FooterLogo,
-  FooterMainContent,
-  FooterMiddle,
-  QRContainer,
-  QRImageCtn,
-  TextCtn,
-  IconCtn,
-  FooterNavigation,
-  GridColumn,
-  LinksContainer,
+  FooterMain,
+  FooterColumn,
+  ColumnTitle,
+  FooterLinks,
+  FooterLink,
   FooterBottom,
-  Translator,
-  CopyRight,
+  Copyright,
+  SocialLinks,
+  SocialLink
 } from './styles';
 
 const Footer = () => {
+  const footerData = [
+    {
+      title: 'Why Choose Us',
+      links: [
+        'Expert Counsellors',
+        '1000+ University Partners',
+        'Visa Success Rate',
+        'Student Testimonials',
+        'Scholarship Assistance'
+      ]
+    },
+    {
+      title: 'What We Do',
+      links: [
+        'Study Abroad Counselling',
+        'University Applications',
+        'Visa Guidance',
+        'Pre-Departure Briefing',
+        'Post-Arrival Support'
+      ]
+    },
+    {
+      title: 'Study Destinations',
+      links: [
+        'Study in USA',
+        'Study in UK',
+        'Study in Canada',
+        'Study in Australia',
+        'Study in Germany'
+      ]
+    },
+    {
+      title: 'Student Resources',
+      links: [
+        'Course Finder',
+        'Scholarship Guide',
+        'Cost Calculator',
+        'Visa Checklist',
+        'Accommodation Help'
+      ]
+    }
+  ];
+
+const socialLinks = [
+  { name: 'Facebook', icon: <FaFacebookF /> },
+  { name: 'Twitter', icon: <FaTwitter /> },
+  { name: 'Instagram', icon: <FaInstagram /> },
+  { name: 'LinkedIn', icon: <FaLinkedinIn /> },
+  { name: 'YouTube', icon: <FaYoutube /> }
+];
+
   return (
     <Wrapper>
       <Inner>
-        <FooterLogo>
-          <Image src={raft_footer_logo} alt="raft_footer_logo" />
-        </FooterLogo>
-        <FooterMainContent>
-          <FooterMiddle>
-            <QRContainer>
-              <QRImageCtn>
-                <Image src={qr_code} alt="qr_code" />
-              </QRImageCtn>
-              <TextCtn>
-                <p>Scan to download App on the Playstore and Appstore.</p>
-                <IconCtn>
-                  <Image src={ic_google_playstore} alt="playstore icon" />
-                  <Image src={ic_baseline_apple} alt="apple icon" />
-                </IconCtn>
-              </TextCtn>
-            </QRContainer>
-            <FooterNavigation>
-              {linksArr.map((l, i) => (
-                <GridColumn key={i}>
-                  <h3>{l.title}</h3>
-                  <LinksContainer>
-                    {l.links.map((link, i) => (
-                      <li key={i}>{link}</li>
-                    ))}
-                  </LinksContainer>
-                </GridColumn>
-              ))}
-            </FooterNavigation>
-          </FooterMiddle>
-          <FooterBottom>
-            <Translator>
-              <h3>English (United Kingdom)</h3>
-              <Image src={ic_chevron_down} alt="chevron down" />
-            </Translator>
-            <CopyRight>
-              <Image src={ic_copyright} alt="copyright svg" />
-              Raft Corp, LLC.
-            </CopyRight>
-          </FooterBottom>
-        </FooterMainContent>
+        <Image 
+          src={csw_logo_footer} 
+          alt="CSW International Education Logo"
+          width={150}
+          height={50}
+          style={{ filter: 'brightness(0) invert(1)' }}
+        />
+        
+        <FooterMain>
+          {footerData.map((column, index) => (
+            <FooterColumn key={index}>
+              <ColumnTitle>{column.title}</ColumnTitle>
+              <FooterLinks>
+                {column.links.map((link, i) => (
+                  <FooterLink key={i}>{link}</FooterLink>
+                ))}
+              </FooterLinks>
+            </FooterColumn>
+          ))}
+        </FooterMain>
+
+        <FooterBottom>
+          <Copyright>
+            © {new Date().getFullYear()} CSW International Education. All rights reserved.
+          </Copyright>
+          
+          <SocialLinks>
+            {socialLinks.map((social, i) => (
+              <SocialLink 
+                key={i} 
+                href="#" 
+                aria-label={social.name}
+              >
+                {social.icon}
+              </SocialLink>
+            ))}
+          </SocialLinks>
+        </FooterBottom>
       </Inner>
     </Wrapper>
   );

@@ -1,3 +1,18 @@
+export const links = [
+  {
+    url: '/universities',
+    linkTo: 'Universities',
+  },
+  {
+    url: '/courses',
+    linkTo: 'Courses',
+  },
+  {
+    url: '/about',
+    linkTo: 'About',
+  },
+];
+
 export const menu = {
   open: {
     width: '250px',
@@ -6,7 +21,6 @@ export const menu = {
     right: '-25px',
     transition: { duration: 0.75, type: 'tween', ease: [0.76, 0, 0.24, 1] },
   },
-
   closed: {
     width: '55px',
     height: '40px',
@@ -20,17 +34,3 @@ export const menu = {
     },
   },
 };
-export const links = [
-  {
-    url: '/',
-    linkTo: 'Solutions',
-  },
-  {
-    url: '/',
-    linkTo: 'Learn',
-  },
-  {
-    url: '/',
-    linkTo: 'About',
-  },
-];

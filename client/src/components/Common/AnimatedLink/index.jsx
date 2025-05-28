@@ -1,6 +1,32 @@
 'use client';
 import { useState } from 'react';
-import { Div, Word, Span, AbsoluteContainer } from './styles';
+import { motion } from 'framer-motion';
+import { styled } from 'styled-components';
+
+const Div = styled.div`
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  cursor: pointer;
+`;
+
+const Word = styled(motion.span)`
+  display: inline-block;
+  position: relative;
+`;
+
+const Span = styled(motion.span)`
+  display: inline-block;
+  color: white;
+`;
+
+const AbsoluteContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+`;
 
 const titleAnimation = {
   rest: {
@@ -43,12 +69,13 @@ const letterAnimationTwo = {
   },
 };
 
-const AnimatedLink = ({ title }) => {
+const AnimatedLink = ({ title, href = '/' }) => {
   const [isHovered, setIsHovered] = useState(false);
   return (
     <Div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => window.location.href = href}
     >
       <AnimatedWord
         title={title}

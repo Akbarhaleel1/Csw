@@ -1,5 +1,4 @@
 'use client';
-
 import Image from 'next/image';
 import {
   Wrapper,
@@ -7,12 +6,11 @@ import {
   LogoContainer,
   Nav,
   CallToActions,
-  AbsoluteLinks,
   BurgerMenu,
+  GetStartedButton,
 } from './styles';
-import raft_logo from '../../../../public/svgs/raft_logo.svg';
+import csw_logo from '../../../../public/images/csw-logo.png';
 import ic_bars from '../../../../public/svgs/ic_bars.svg';
-import { GetStartedButton } from '@/components';
 import AnimatedLink from '@/components/Common/AnimatedLink';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -20,11 +18,12 @@ import { links, menu } from './constants';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+
   return (
     <Wrapper>
       <Inner>
         <LogoContainer>
-          <Image src={raft_logo} alt="raft_logo" priority />
+          <Image src={csw_logo} alt="csw_logo" priority />
           <BurgerMenu onClick={() => setIsOpen(!isOpen)}>
             <motion.div
               variants={menu}
@@ -36,12 +35,12 @@ const Header = () => {
         </LogoContainer>
         <Nav className={isOpen ? 'active' : ''}>
           {links.map((link, i) => (
-            <AnimatedLink key={i} title={link.linkTo} />
+            <AnimatedLink key={i} title={link.linkTo} href={link.url} />
           ))}
         </Nav>
         <CallToActions className={isOpen ? 'active' : ''}>
-          <AnimatedLink title="Login" />
-          <GetStartedButton padding="0.5rem 0.75rem" />
+          <AnimatedLink title="Login" href="/login" />
+          <GetStartedButton href="/signup">Get Started</GetStartedButton>
         </CallToActions>
       </Inner>
     </Wrapper>
