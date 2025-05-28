@@ -7,12 +7,14 @@ import {
   IntroSection,
   JoinSection,
   OffersSection,
+  UniversitySearch,
 } from '@/components';
 
 export default function Home() {
   return (
     <main>
       <HeroSection />
+      <UniversitySearch/>
       <Featured />
       <OffersSection />
       <FinancilaFreedom />
