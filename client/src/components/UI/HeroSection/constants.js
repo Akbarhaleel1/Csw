@@ -1,13 +1,13 @@
 // For desktop
-export const phrases = ['Building the future of', 'banking.'];
+export const phrases = ['Your gateway to', 'global education'];
 export const paragraphPhrases = [
-  "Experience the future of banking with RAFT. We're here to",
-  'empower your financial journey.',
+  "Transform your future with world-class education abroad. We guide",
+  'thousands of students to their dream universities every year.',
 ];
 
 // For mobile
-export const mobilePhrases = ['Building the future', 'of banking'];
+export const mobilePhrases = ['Your gateway to', 'global education'];
 export const mobileParagraphPhrases = [
-  "Experience the future of banking with RAFT. We're",
-  'here to empower your financial journey.',
+  "Transform your future with world-class education abroad.",
+  'We guide students to their dream universities worldwide.',
 ];
