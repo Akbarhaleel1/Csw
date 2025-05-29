@@ -79,18 +79,18 @@ export class UserRepository implements IUserRepository {
     console.log("user.createdAt", user?.createdAt);
 
     if (user && user.createdAt) {
-      console.log('firsssssssssssssssst')
+      console.log("firsssssssssssssssst");
       const createdAt = new Date(user.createdAt);
       const newTime = new Date();
       const timeDifference = newTime.getTime() - createdAt.getTime();
       const difference = Math.floor(timeDifference / (1000 * 60));
-      console.log('timeDifference', timeDifference)
-      console.log('difference', difference)
+      console.log("timeDifference", timeDifference);
+      console.log("difference", difference);
       if (difference > 5) {
         return null;
       }
       user.isVerified = true;
-            console.log('user.isVerified', user.isVerified)
+      console.log("user.isVerified", user.isVerified);
 
       user.otp = 0;
       await user.save();
@@ -100,24 +100,24 @@ export class UserRepository implements IUserRepository {
     } else {
       return null;
     }
-}
+  }
 
   async userLogin(email: string, password: string) {
     try {
       const userDoc = await User.findOne({ email });
 
       if (!userDoc) {
-        return { error: 'Email is not found' };
+        return { error: "Email is not found" };
       }
 
       if (!userDoc.password) {
-        return { error: 'No password set for this user' };
+        return { error: "No password set for this user" };
       }
       let hashedPass = userDoc.password;
       const isMatch = await bcrypt.compare(password, hashedPass);
 
       if (!isMatch) {
-        return { error: 'Invalid password' };
+        return { error: "Invalid password" };
       }
       const user = {
         _id: userDoc._id,
@@ -128,7 +128,7 @@ export class UserRepository implements IUserRepository {
       return { token, userDoc };
     } catch (err) {
       console.error("error", err);
-      return { error: 'An unexpected error occurred' };  
+      return { error: "An unexpected error occurred" };
     }
   }
 
@@ -152,41 +152,91 @@ export class UserRepository implements IUserRepository {
       throw new Error("Invalid token payload");
     }
   }
-
   async studentFormRepo(values: any, files: any) {
-  try {
-    console.log('studentFormRepo values is', values);
-    console.log('studentFormRepo files is', files);
+    try {
+      console.log("studentFormRepo values is", values);
+      console.log("studentFormRepo files is", files);
 
-    // Create a new student form document with proper typing
-    const studentFormData = {
-      ...values,
-      dateOfBirth: new Date(values.dateOfBirth), // Convert string to Date
-      personalPhoto: {
-        data: files.personalPhoto[0].buffer,
-        contentType: files.personalPhoto[0].mimetype
-      },
-      passportCopy: {
-        data: files.passportCopy[0].buffer,
-        contentType: files.passportCopy[0].mimetype
-      },
-      academicCertificate: {
-        data: files.academicCertificate[0].buffer,
-        contentType: files.academicCertificate[0].mimetype
-      },
-      residencyPermit: {
-        data: files.residencyPermit[0].buffer,
-        contentType: files.residencyPermit[0].mimetype
-      }
-    };
+      // Create a new student form document with proper typing
+      const studentFormData = {
+        ...values,
+        dateOfBirth: new Date(values.dateOfBirth), // Convert string to Date
+        personalPhoto: {
+          data: files.personalPhoto[0].buffer,
+          contentType: files.personalPhoto[0].mimetype,
+        },
+        passportCopy: {
+          data: files.passportCopy[0].buffer,
+          contentType: files.passportCopy[0].mimetype,
+        },
+        academicCertificate: {
+          data: files.academicCertificate[0].buffer,
+          contentType: files.academicCertificate[0].mimetype,
+        },
+        residencyPermit: {
+          data: files.residencyPermit[0].buffer,
+          contentType: files.residencyPermit[0].mimetype,
+        },
+      };
 
-    const studentForm = new StudentFormSchema(studentFormData);
-    const savedForm = await studentForm.save();
-    console.log('Student form saved successfully:', savedForm);
-    return savedForm;
-  } catch (error) {
-    console.error('Error saving student form:', error);
-    throw error;
+      const studentForm = new StudentFormSchema(studentFormData);
+      const savedForm = await studentForm.save();
+      console.log("Student form saved successfully:", savedForm);
+      return savedForm;
+    } catch (error) {
+      console.error("Error saving student form:", error);
+      throw error;
+    }
   }
-}
+
+  async findStudentFormByEmail(email: string) {
+    return await StudentFormSchema.findOne({ email });
+  }
+
+  async updateStudentForm(id: string, values: any, files: any) {
+    try {
+      const updateData: any = {
+        ...values,
+        dateOfBirth: new Date(values.dateOfBirth),
+      };
+
+      // Only update files if they are provided
+      if (files.personalPhoto) {
+        updateData.personalPhoto = {
+          data: files.personalPhoto[0].buffer,
+          contentType: files.personalPhoto[0].mimetype,
+        };
+      }
+      if (files.passportCopy) {
+        updateData.passportCopy = {
+          data: files.passportCopy[0].buffer,
+          contentType: files.passportCopy[0].mimetype,
+        };
+      }
+      if (files.academicCertificate) {
+        updateData.academicCertificate = {
+          data: files.academicCertificate[0].buffer,
+          contentType: files.academicCertificate[0].mimetype,
+        };
+      }
+      if (files.residencyPermit) {
+        updateData.residencyPermit = {
+          data: files.residencyPermit[0].buffer,
+          contentType: files.residencyPermit[0].mimetype,
+        };
+      }
+
+      const updatedForm = await StudentFormSchema.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true } // Return the updated document
+      );
+
+      console.log("Student form updated successfully:", updatedForm);
+      return updatedForm;
+    } catch (error) {
+      console.error("Error updating student form:", error);
+      throw error;
+    }
+  }
 }

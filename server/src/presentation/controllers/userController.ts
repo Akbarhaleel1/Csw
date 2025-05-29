@@ -118,7 +118,8 @@ console.log('password',  password)
       next(error);
     }
   }
- studentForm = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  
+studentForm = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     console.log("🌐 studentForm is working");
 
@@ -127,12 +128,23 @@ console.log('password',  password)
     console.log('📦 Form Body:', util.inspect(req.body, { showHidden: false, depth: null, colors: true }));
     console.log('📁 Uploaded Files:', files);
 
-          const result = await this.userUsecase.studentFormUsecase(req.body, files);
+    const result = await this.userUsecase.studentFormUsecase(req.body, files);
 
+    // Determine if this was an update or creation
+    const isUpdate = result?.__v !== undefined && result.__v > 0; // Check if document has been versioned
+    const message = isUpdate 
+      ? "Student form updated successfully!" 
+      : "Registration submitted successfully! Your form has been sent to the admin for review.!";
 
-    res.status(200).json({ message: "admin received successfully!" });
+    res.status(200).json({ 
+      success: true,
+      message,
+      data: result 
+    });
   } catch (error) {
+    console.error('❌ Error in studentForm:', error);
     next(error);
   }
 }
+  
 }

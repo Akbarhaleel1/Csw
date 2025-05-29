@@ -337,20 +337,7 @@ const handleDocumentUpload = (key, file) => {
                                 <RefreshCw size={14} />
                                 Replace
                               </button>
-                              <button
-                                type="button"
-                                className="file-action-btn file-action-remove"
-                                onClick={() => {
-                                  setFormData(prev => {
-                                    const newDocs = {...prev.documents};
-                                    delete newDocs[doc.key];
-                                    return {...prev, documents: newDocs};
-                                  });
-                                }}
-                              >
-                                <Trash2 size={14} />
-                                Remove
-                              </button>
+                           
                             </div>
                           </div>
                         ) : (
