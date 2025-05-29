@@ -15,4 +15,5 @@ export interface IuserUsecase {
     loginVerification(email:string,password:string): Promise<UserLogin| null>
     getUser(userId:any): Promise<UserDocument|null>
     refreshTokenUsecase(oldToken:string): Promise<UserLogin| null>
+    studentFormUsecase(values:string,files:any): any
 }

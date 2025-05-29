@@ -1,11 +1,15 @@
-// types/express.d.ts
-
-import { UserPayload } from '../utils/authMiddleware'; 
+import { UserPayload } from '../utils/authMiddleware';
+import { File } from 'multer';
 
 declare global {
   namespace Express {
     interface Request {
-      usersData?: UserPayload; 
+      usersData?: UserPayload;
+
+      // Add this 👇
+      files?: {
+        [fieldname: string]: File[];
+      };
     }
   }
 }
