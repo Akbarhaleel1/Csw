@@ -24,7 +24,7 @@ app.use(session({
   saveUninitialized: true,
   cookie: { secure: false }
 }));
-
+console.log('dd')
 
 app.use(cors());
 
