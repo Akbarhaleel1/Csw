@@ -1,14 +1,19 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   SearchContainer,
+  SearchHeader,
   SearchTitle,
+  SearchSubtitle,
   SearchGrid,
+  FilterCard,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
   InputGroup,
   InputLabel,
-  UniversityInput,
-  SuggestionsList,
-  SuggestionItem,
   SliderContainer,
   SliderHeader,
   SliderLabel,
@@ -16,45 +21,57 @@ import {
   RangeSlider,
   Dropdown,
   SearchButton,
-  FilterRow,
+  LoadingContainer,
+  LoadingSpinner,
+  LoadingText,
+  LoadingProgress,
+  IconWrapper,
+  ErrorMessage,
 } from './styles';
 import {
   budgetRange,
   countries,
   studyLevels,
   academicCertificates,
-  universitySuggestions,
 } from './constants';
-import { MagnifyingGlass } from '@phosphor-icons/react';
+import { 
+  MagnifyingGlass, 
+  MapPin, 
+  GraduationCap, 
+  Certificate, 
+  CurrencyDollar,
+  House,
+  CheckCircle,
+  XCircle
+} from '@phosphor-icons/react';
 
 const UniversitySearch = () => {
-  const [universityName, setUniversityName] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
-  const [tuitionRange, setTuitionRange] = useState([0, 10000]);
-  const [livingExpensesRange, setLivingExpensesRange] = useState([0, 10000]);
+    const router = useRouter();
+  const [tuitionRange, setTuitionRange] = useState([5000, 25000]);
+  const [livingExpensesRange, setLivingExpensesRange] = useState([800, 2500]);
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedStudyLevel, setSelectedStudyLevel] = useState('');
   const [selectedCertificate, setSelectedCertificate] = useState('');
-  const inputRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [errors, setErrors] = useState({});
+  const [redirecting, setRedirecting] = useState(false);
 
-  useEffect(() => {
-    if (universityName.length > 1) {
-      const filtered = universitySuggestions.filter(uni =>
-        uni.toLowerCase().includes(universityName.toLowerCase())
-      );
-      setFilteredSuggestions(filtered);
-      setShowSuggestions(filtered.length > 0);
-    } else {
-      setFilteredSuggestions([]);
-      setShowSuggestions(false);
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!selectedCountry) {
+      newErrors.country = 'Please select a study destination';
     }
-  }, [universityName]);
-
-  const handleSuggestionClick = (suggestion) => {
-    setUniversityName(suggestion);
-    setShowSuggestions(false);
-    inputRef.current.focus();
+    if (!selectedStudyLevel) {
+      newErrors.studyLevel = 'Please select a study level';
+    }
+    if (!selectedCertificate) {
+      newErrors.certificate = 'Please select your last certificate';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleTuitionChange = (e, index) => {
@@ -62,7 +79,6 @@ const UniversitySearch = () => {
     const newRange = [...tuitionRange];
     newRange[index] = newValue;
     
-    // Ensure min doesn't exceed max and vice versa
     if (index === 0 && newValue > tuitionRange[1]) {
       newRange[1] = newValue;
     } else if (index === 1 && newValue < tuitionRange[0]) {
@@ -86,9 +102,15 @@ const UniversitySearch = () => {
     setLivingExpensesRange(newRange);
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingProgress(0);
+    
     const searchCriteria = {
-      universityName,
       tuitionMin: tuitionRange[0],
       tuitionMax: tuitionRange[1],
       livingExpensesMin: livingExpensesRange[0],
@@ -97,151 +119,218 @@ const UniversitySearch = () => {
       studyLevel: selectedStudyLevel,
       lastCertificate: selectedCertificate,
     };
+
     
     console.log('Search criteria:', searchCriteria);
-    // Here you would typically make an API call with the search criteria
+    
+ // Simulate loading progress
+    const progressInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return prev;
+        }
+        return prev + Math.random() * 15;
+      });
+    }, 200);
+    
+    // When loading is complete, set redirecting state
+    setTimeout(() => {
+      setLoadingProgress(100);
+      setTimeout(() => {
+        setRedirecting(true);
+        router.push('/courses');
+      }, 500);
+    }, 3000);
   };
+
+
+if (isLoading || redirecting) {
+    return (
+      <LoadingContainer>
+        <LoadingSpinner />
+        <LoadingText>Let AI find the best universities for you</LoadingText>
+        <LoadingProgress>
+          <div 
+            className="progress-fill" 
+            style={{ width: `${loadingProgress}%` }}
+          />
+        </LoadingProgress>
+        <p className="loading-subtitle">
+          Analyzing {Math.floor(loadingProgress * 50)} universities worldwide...
+        </p>
+      </LoadingContainer>
+    );
+  }
 
   return (
     <SearchContainer>
-      <SearchTitle>Find Your Perfect University</SearchTitle>
+      <SearchHeader>
+        <SearchTitle>Discover Your Dream University</SearchTitle>
+        <SearchSubtitle>
+          Find the perfect match based on your preferences and budget
+        </SearchSubtitle>
+      </SearchHeader>
       
       <SearchGrid>
-        <InputGroup>
-          <InputLabel>University Name</InputLabel>
-          <div style={{ position: 'relative' }}>
-            <UniversityInput
-              ref={inputRef}
-              type="text"
-              placeholder="Search by university name"
-              value={universityName}
-              onChange={(e) => setUniversityName(e.target.value)}
-              onFocus={() => universityName.length > 1 && setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            />
-            {showSuggestions && (
-              <SuggestionsList>
-                {filteredSuggestions.map((suggestion, index) => (
-                  <SuggestionItem
-                    key={index}
-                    onMouseDown={() => handleSuggestionClick(suggestion)}
-                  >
-                    {suggestion}
-                  </SuggestionItem>
+        <FilterCard>
+          <CardHeader>
+            <IconWrapper>
+              <CurrencyDollar size={24} weight="bold" />
+            </IconWrapper>
+            <div>
+              <CardTitle>Budget Planning</CardTitle>
+              <CardDescription>Set your financial preferences</CardDescription>
+            </div>
+          </CardHeader>
+          
+          <CardContent>
+            <SliderContainer>
+              <SliderHeader>
+                <SliderLabel>Annual Tuition Fees</SliderLabel>
+                <SliderValue>
+                  ${tuitionRange[0].toLocaleString()} - ${tuitionRange[1].toLocaleString()}
+                </SliderValue>
+              </SliderHeader>
+              <div className="slider-group">
+                <RangeSlider
+                  type="range"
+                  min={budgetRange.min}
+                  max={budgetRange.max}
+                  step={budgetRange.step}
+                  value={tuitionRange[0]}
+                  onChange={(e) => handleTuitionChange(e, 0)}
+                />
+                <RangeSlider
+                  type="range"
+                  min={budgetRange.min}
+                  max={budgetRange.max}
+                  step={budgetRange.step}
+                  value={tuitionRange[1]}
+                  onChange={(e) => handleTuitionChange(e, 1)}
+                />
+              </div>
+            </SliderContainer>
+            
+            <SliderContainer>
+              <SliderHeader>
+                <SliderLabel>Monthly Living Expenses</SliderLabel>
+                <SliderValue>
+                  ${livingExpensesRange[0].toLocaleString()} - ${livingExpensesRange[1].toLocaleString()}
+                </SliderValue>
+              </SliderHeader>
+              <div className="slider-group">
+                <RangeSlider
+                  type="range"
+                  min={budgetRange.min}
+                  max={budgetRange.max}
+                  step={budgetRange.step}
+                  value={livingExpensesRange[0]}
+                  onChange={(e) => handleLivingExpensesChange(e, 0)}
+                />
+                <RangeSlider
+                  type="range"
+                  min={budgetRange.min}
+                  max={budgetRange.max}
+                  step={budgetRange.step}
+                  value={livingExpensesRange[1]}
+                  onChange={(e) => handleLivingExpensesChange(e, 1)}
+                />
+              </div>
+            </SliderContainer>
+          </CardContent>
+        </FilterCard>
+        
+        <FilterCard>
+          <CardHeader>
+            <IconWrapper>
+              <GraduationCap size={24} weight="bold" />
+            </IconWrapper>
+            <div>
+              <CardTitle>Study Preferences</CardTitle>
+              <CardDescription>Choose your academic path</CardDescription>
+            </div>
+          </CardHeader>
+          
+          <CardContent>
+            <InputGroup>
+              <InputLabel>
+                <MapPin size={16} />
+                Study Destination *
+              </InputLabel>
+              <Dropdown
+                value={selectedCountry}
+                onChange={(e) => {
+                  setSelectedCountry(e.target.value);
+                  setErrors(prev => ({ ...prev, country: '' }));
+                }}
+                className={errors.country ? 'error' : ''}
+              >
+                <option value="">Select Country</option>
+                {countries.map((country, index) => (
+                  <option key={index} value={country}>
+                    {country}
+                  </option>
                 ))}
-              </SuggestionsList>
-            )}
-          </div>
-        </InputGroup>
-        
-        <div>
-          <SliderContainer>
-            <SliderHeader>
-              <SliderLabel>Annual Tuition Fees (USD)</SliderLabel>
-              <SliderValue>
-                ${tuitionRange[0]} - ${tuitionRange[1]}
-              </SliderValue>
-            </SliderHeader>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <RangeSlider
-                type="range"
-                min={budgetRange.min}
-                max={budgetRange.max}
-                step={budgetRange.step}
-                value={tuitionRange[0]}
-                onChange={(e) => handleTuitionChange(e, 0)}
-              />
-              <RangeSlider
-                type="range"
-                min={budgetRange.min}
-                max={budgetRange.max}
-                step={budgetRange.step}
-                value={tuitionRange[1]}
-                onChange={(e) => handleTuitionChange(e, 1)}
-              />
-            </div>
-          </SliderContainer>
-          
-          <SliderContainer>
-            <SliderHeader>
-              <SliderLabel>Monthly Living Expenses (USD)</SliderLabel>
-              <SliderValue>
-                ${livingExpensesRange[0]} - ${livingExpensesRange[1]}
-              </SliderValue>
-            </SliderHeader>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <RangeSlider
-                type="range"
-                min={budgetRange.min}
-                max={budgetRange.max}
-                step={budgetRange.step}
-                value={livingExpensesRange[0]}
-                onChange={(e) => handleLivingExpensesChange(e, 0)}
-              />
-              <RangeSlider
-                type="range"
-                min={budgetRange.min}
-                max={budgetRange.max}
-                step={budgetRange.step}
-                value={livingExpensesRange[1]}
-                onChange={(e) => handleLivingExpensesChange(e, 1)}
-              />
-            </div>
-          </SliderContainer>
-        </div>
-        
-        <FilterRow>
-          <InputGroup>
-            <InputLabel>Select Study Destination</InputLabel>
-            <Dropdown
-              value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
-            >
-              <option value="">All Countries</option>
-              {countries.map((country, index) => (
-                <option key={index} value={country}>
-                  {country}
-                </option>
-              ))}
-            </Dropdown>
-          </InputGroup>
-          
-          <InputGroup>
-            <InputLabel>Select Study Level</InputLabel>
-            <Dropdown
-              value={selectedStudyLevel}
-              onChange={(e) => setSelectedStudyLevel(e.target.value)}
-            >
-              <option value="">All Study Levels</option>
-              {studyLevels.map((level, index) => (
-                <option key={index} value={level}>
-                  {level}
-                </option>
-              ))}
-            </Dropdown>
-          </InputGroup>
-          
-          <InputGroup>
-            <InputLabel>Last Academic Certificate</InputLabel>
-            <Dropdown
-              value={selectedCertificate}
-              onChange={(e) => setSelectedCertificate(e.target.value)}
-            >
-              <option value="">All Certificates</option>
-              {academicCertificates.map((cert, index) => (
-                <option key={index} value={cert}>
-                  {cert}
-                </option>
-              ))}
-            </Dropdown>
-          </InputGroup>
-        </FilterRow>
-        
+              </Dropdown>
+              {errors.country && <ErrorMessage>{errors.country}</ErrorMessage>}
+            </InputGroup>
+            
+            <InputGroup>
+              <InputLabel>
+                <GraduationCap size={16} />
+                Study Level *
+              </InputLabel>
+              <Dropdown
+                value={selectedStudyLevel}
+                onChange={(e) => {
+                  setSelectedStudyLevel(e.target.value);
+                  setErrors(prev => ({ ...prev, studyLevel: '' }));
+                }}
+                className={errors.studyLevel ? 'error' : ''}
+              >
+                <option value="">Select Level</option>
+                {studyLevels.map((level, index) => (
+                  <option key={index} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </Dropdown>
+              {errors.studyLevel && <ErrorMessage>{errors.studyLevel}</ErrorMessage>}
+            </InputGroup>
+            
+            <InputGroup>
+              <InputLabel>
+                <Certificate size={16} />
+                Last Certificate *
+              </InputLabel>
+              <Dropdown
+                value={selectedCertificate}
+                onChange={(e) => {
+                  setSelectedCertificate(e.target.value);
+                  setErrors(prev => ({ ...prev, certificate: '' }));
+                }}
+                className={errors.certificate ? 'error' : ''}
+              >
+                <option value="">Select Certificate</option>
+                {academicCertificates.map((cert, index) => (
+                  <option key={index} value={cert}>
+                    {cert}
+                  </option>
+                ))}
+              </Dropdown>
+              {errors.certificate && <ErrorMessage>{errors.certificate}</ErrorMessage>}
+            </InputGroup>
+          </CardContent>
+        </FilterCard>
+      </SearchGrid>
+      
+      <div className="search-section">
         <SearchButton onClick={handleSearch}>
           <MagnifyingGlass size={20} weight="bold" />
-          Search Universities
+          Find Perfect Universities
         </SearchButton>
-      </SearchGrid>
+      </div>
     </SearchContainer>
   );
 };
