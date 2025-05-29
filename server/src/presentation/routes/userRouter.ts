@@ -1,4 +1,6 @@
 import express from 'express';
+import multer from 'multer';
+
 const router = express.Router();
 
 import { UserRepository } from '../../infastructure/repositroy/userRepository'; 
@@ -9,6 +11,20 @@ const repository = new UserRepository();
 const userUsecase = new UserUsecase(repository);
 const controller = new UserController(userUsecase);
 
+// Multer setup
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+const formUpload = upload.fields([
+  { name: 'personalPhoto', maxCount: 1 },
+  { name: 'passportCopy', maxCount: 1 },
+  { name: 'academicCertificate', maxCount: 1 },
+  { name: 'residencyPermit', maxCount: 1 },
+  { name: 'additionalDoc1', maxCount: 1 },
+  { name: 'additionalDoc2', maxCount: 1 },
+]);
+
+router.post('/studentForm', formUpload, (req, res, next) => controller.studentForm(req, res, next));
 router.post('/signup', (req, res, next) => controller.registerUser(req, res, next));
 router.post('/verify-otp', (req, res, next) => controller.otpConfirm(req, res, next));
 router.post('/login', (req, res, next) => controller.login(req, res, next));

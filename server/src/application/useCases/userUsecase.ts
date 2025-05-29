@@ -66,4 +66,9 @@ export class UserUsecase implements IuserUsecase {
     }
   }
 
+  async studentFormUsecase(values: string, files: any) {
+    const result = await this.repository.studentFormRepo(values, files);
+
+       return null
+  }
 }

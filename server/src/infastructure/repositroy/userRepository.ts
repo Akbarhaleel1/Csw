@@ -8,6 +8,7 @@ import { registerUser } from "../../domain/entities/signUpUser";
 import { User } from "../database/model/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
 import bcrypt from "bcrypt";
+import StudentFormSchema from "../database/model/StudentFormSchema";
 
 export class UserRepository implements IUserRepository {
   async findUserExists(email: string) {
@@ -151,4 +152,41 @@ export class UserRepository implements IUserRepository {
       throw new Error("Invalid token payload");
     }
   }
+
+  async studentFormRepo(values: any, files: any) {
+  try {
+    console.log('studentFormRepo values is', values);
+    console.log('studentFormRepo files is', files);
+
+    // Create a new student form document with proper typing
+    const studentFormData = {
+      ...values,
+      dateOfBirth: new Date(values.dateOfBirth), // Convert string to Date
+      personalPhoto: {
+        data: files.personalPhoto[0].buffer,
+        contentType: files.personalPhoto[0].mimetype
+      },
+      passportCopy: {
+        data: files.passportCopy[0].buffer,
+        contentType: files.passportCopy[0].mimetype
+      },
+      academicCertificate: {
+        data: files.academicCertificate[0].buffer,
+        contentType: files.academicCertificate[0].mimetype
+      },
+      residencyPermit: {
+        data: files.residencyPermit[0].buffer,
+        contentType: files.residencyPermit[0].mimetype
+      }
+    };
+
+    const studentForm = new StudentFormSchema(studentFormData);
+    const savedForm = await studentForm.save();
+    console.log('Student form saved successfully:', savedForm);
+    return savedForm;
+  } catch (error) {
+    console.error('Error saving student form:', error);
+    throw error;
+  }
+}
 }

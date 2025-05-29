@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { IuserUsecase } from "../../application/interface/IuserUsecase";
+import util from 'util';
 
 export class UserController {
   constructor(private userUsecase: IuserUsecase) {}
@@ -117,4 +118,21 @@ console.log('password',  password)
       next(error);
     }
   }
+ studentForm = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    console.log("🌐 studentForm is working");
+
+    // Uploaded files
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    console.log('📦 Form Body:', util.inspect(req.body, { showHidden: false, depth: null, colors: true }));
+    console.log('📁 Uploaded Files:', files);
+
+          const result = await this.userUsecase.studentFormUsecase(req.body, files);
+
+
+    res.status(200).json({ message: "admin received successfully!" });
+  } catch (error) {
+    next(error);
+  }
+}
 }
