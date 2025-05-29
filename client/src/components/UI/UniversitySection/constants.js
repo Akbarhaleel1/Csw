@@ -19,6 +19,7 @@ export const countries = [
   "Singapore",
   "Malaysia",
   "United Arab Emirates",
+  "Other",
 ];
 
 export const studyLevels = [
@@ -29,6 +30,7 @@ export const studyLevels = [
   "PhD/Doctorate",
   "Postgraduate Diploma",
   "Professional Certificate",
+  "Other",
 ];
 
 export const academicCertificates = [
@@ -39,6 +41,7 @@ export const academicCertificates = [
   "Bachelor's Degree",
   "Master's Degree",
   "Professional Certificate",
+  "Other",
 ];
 
 export const universitySuggestions = [
