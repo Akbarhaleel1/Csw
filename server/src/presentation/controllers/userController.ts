@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { IuserUsecase } from "../../application/interface/IuserUsecase";
 import util from 'util';
+import { sendStudentConfirmationMail } from "../../utils/studentFromMail";
 
 export class UserController {
   constructor(private userUsecase: IuserUsecase) {}
@@ -173,6 +174,7 @@ studentForm = async (req: Request, res: Response, next: NextFunction): Promise<v
     const message = isUpdate 
       ? "Student form updated successfully!" 
       : "Registration submitted successfully! Your form has been sent to the admin for review.!";
+    await sendStudentConfirmationMail(result);
 
     res.status(200).json({ 
       success: true,
