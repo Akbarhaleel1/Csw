@@ -66,9 +66,18 @@ export class UserUsecase implements IuserUsecase {
     }
   }
 
-  async studentFormUsecase(values: string, files: any) {
-    const result = await this.repository.studentFormRepo(values, files);
-
-       return null
-  }
+async studentFormUsecase(values: any, files: any) {
+    // First check if a student form with this email already exists
+    const existingForm = await this.repository.findStudentFormByEmail(values.email);
+    
+    if (existingForm) {
+        // Update existing form
+        const updatedForm = await this.repository.updateStudentForm(existingForm._id, values, files);
+        return updatedForm;
+    } else {
+        // Create new form
+        const result = await this.repository.studentFormRepo(values, files);
+        return result;
+    }
+}
 }

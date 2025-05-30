@@ -15,4 +15,6 @@ export interface IUserRepository {
     getUserById(userId:string): Promise<UserDocument | null>
     refreashToken(token: string): Promise<any | null>
     studentFormRepo(values:string, files: any): Promise<any | null>
+    findStudentFormByEmail(email:string): Promise<any | null>
+    updateStudentForm(id: string, values: any, files: any): Promise<any | null>
 }
