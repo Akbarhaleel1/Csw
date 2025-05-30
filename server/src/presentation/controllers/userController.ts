@@ -118,6 +118,44 @@ console.log('password',  password)
       next(error);
     }
   }
+ favourites = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { userId, favorites } = req.body;
+
+        // Validate input
+        if (!userId || !Array.isArray(favorites)) {
+            res.status(400).json({ error: 'User ID and favorites IDs are required' });
+            return; 
+        }
+
+        // Check if favorites IDs are valid numbers
+        if (favorites.some(id => typeof id !== 'number')) {
+            res.status(400).json({ error: 'favorites IDs must be numbers' });
+            return;
+        }
+
+        console.log("Favourites endpoint processing request");
+
+        // Process the favourites using your use case
+        const result = await this.userUsecase.favouritesUseCase(userId, favorites);
+
+        if (!result) {
+            res.status(404).json({ message: "User does not exist or operation failed" });
+            return;
+        }
+
+        // Success response
+        res.status(200).json({
+            success: true,
+            message: "Favourites updated successfully",
+            data: result
+        });
+
+    } catch (error) {
+        console.error("Error in favourites endpoint:", error);
+        next(error); 
+    }
+}
   
 studentForm = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

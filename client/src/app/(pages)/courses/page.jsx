@@ -14,6 +14,7 @@ import {
   Search,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import {
   PageContainer,
   HeaderSection,
@@ -68,6 +69,10 @@ const CourseResultsPage = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [showMaxFavoritesModal, setShowMaxFavoritesModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
   const [filters, setFilters] = useState({
     destination: "United States",
     studyLevel: "Master's Degree",
@@ -111,6 +116,44 @@ const CourseResultsPage = () => {
   const updateFilters = () => {
     console.log("Updating search with filters:", filters);
     setShowFilters(false);
+  };
+  const api = axios.create({
+    baseURL: "http://localhost:3001",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const saveSelections = async () => {
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const userId = "user123";
+
+      if (favorites.length === 0) {
+        throw new Error("Please select at least one university");
+      }
+
+      const response = await api.post("/favourites", {
+        userId,
+       favorites,
+      });
+
+      setSuccess(response.data.message || "Selections saved successfully!");
+
+      if (response.status === 200) {
+        router.push("/studentForm");
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.error ||
+          err.message ||
+          "Failed to save selections. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -284,7 +327,6 @@ const CourseResultsPage = () => {
                   </TuitionText>
                 </DetailItem>
               </div>
-
               <ViewDetailsButton>View Details</ViewDetailsButton>
             </CourseCard>
           ))}
@@ -301,9 +343,38 @@ const CourseResultsPage = () => {
             >
               {favorites.length} of 5 universities selected
             </p>
-            <ApplyButton onClick={() => router.push("/studentForm")}>
-              Apply to Selected Universities ({favorites.length})
+            <ApplyButton
+              onClick={saveSelections}
+              disabled={isLoading || favorites.length === 0}
+            >
+              {isLoading
+                ? "Saving..."
+                : `Apply to Selected Universities (${favorites.length})`}
             </ApplyButton>
+
+            {error && (
+              <p
+                style={{
+                  color: "red",
+                  marginTop: "0.5rem",
+                  fontSize: "0.875rem",
+                }}
+              >
+                {error}
+              </p>
+            )}
+            {success && (
+              <p
+                style={{
+                  color: "green",
+                  marginTop: "0.5rem",
+                  fontSize: "0.875rem",
+                }}
+              >
+                {success}
+              </p>
+            )}
+
             <p
               style={{
                 margin: "0",

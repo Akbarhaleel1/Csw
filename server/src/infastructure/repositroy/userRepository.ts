@@ -10,6 +10,7 @@ import { IUserRepository } from "../interface/IUserRepository";
 import bcrypt from "bcrypt";
 import StudentFormSchema from "../database/model/StudentFormSchema";
 import { uploadS3Image } from "../../utils/s3/s3";
+import { Favourite } from "../database/model/favourites";
 
 export class UserRepository implements IUserRepository {
   async findUserExists(email: string) {
@@ -211,6 +212,21 @@ async studentFormRepo(values: any, files: any) {
   async findStudentFormByEmail(email: string) {
     return await StudentFormSchema.findOne({ email });
   }
+async favouritesRepository(userId: string, favourites: number[]) {
+  try {
+    const updated = await Favourite.findOneAndUpdate(
+      { userId },
+      { favourites },
+      { upsert: true, new: true }
+    );
+
+    return updated?.favourites || [];
+  } catch (error) {
+    console.error('Error updating favourites:', error);
+    throw new Error('Failed to update favourites');
+  }
+}
+
 
  async updateStudentForm(id: string, values: any, files: any) {
   try {
@@ -249,7 +265,8 @@ async studentFormRepo(values: any, files: any) {
   } catch (error) {
     console.error("Error updating student form:", error);
     throw error;
-  }
+ }
+ 
 }
 
 }

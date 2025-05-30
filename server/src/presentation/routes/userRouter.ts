@@ -29,5 +29,6 @@ router.post('/signup', (req, res, next) => controller.registerUser(req, res, nex
 router.post('/verify-otp', (req, res, next) => controller.otpConfirm(req, res, next));
 router.post('/login', (req, res, next) => controller.login(req, res, next));
 router.post('/refreshToken', (req, res, next) => controller.refreshToken(req, res, next));
+router.post('/favourites', (req, res, next) => controller.favourites(req, res, next));
 
 export default router;
