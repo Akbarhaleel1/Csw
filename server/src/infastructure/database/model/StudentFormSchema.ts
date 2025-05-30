@@ -18,22 +18,12 @@ interface IStudentForm extends Document {
   yearOfStudy: string;
   emergencyContact: string;
   emergencyPhone: string;
-  personalPhoto: {
-    data: Buffer;
-    contentType: string;
-  };
-  passportCopy: {
-    data: Buffer;
-    contentType: string;
-  };
-  academicCertificate: {
-    data: Buffer;
-    contentType: string;
-  };
-  residencyPermit: {
-    data: Buffer;
-    contentType: string;
-  };
+  personalPhoto: string;
+  passportCopy: string;
+  academicCertificate: string;
+  residencyPermit: string;
+  status?: string;
+  reasons?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,24 +45,14 @@ const StudentFormSchema: Schema = new Schema({
   yearOfStudy: { type: String, required: true },
   emergencyContact: { type: String, required: true },
   emergencyPhone: { type: String, required: true },
-  personalPhoto: {
-    data: { type: Buffer, required: true },
-    contentType: { type: String, required: true }
-  },
-  passportCopy: {
-    data: { type: Buffer, required: true },
-    contentType: { type: String, required: true }
-  },
-  academicCertificate: {
-    data: { type: Buffer, required: true },
-    contentType: { type: String, required: true }
-  },
-  residencyPermit: {
-    data: { type: Buffer, required: true },
-    contentType: { type: String, required: true }
-  },
+  personalPhoto: { type: String, required: true },
+  passportCopy: { type: String, required: true },
+  academicCertificate: { type: String, required: true },
+  residencyPermit: { type: String, required: true },
+  status: { type: String, default: "pending" }, // default value
+  reasons: { type: String, default: null },     // optional
 }, {
-  timestamps: true // This adds createdAt and updatedAt fields
+  timestamps: true
 });
 
 export default mongoose.model<IStudentForm>('StudentForm', StudentFormSchema);
