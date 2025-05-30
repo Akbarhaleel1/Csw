@@ -12,6 +12,7 @@ import StudentFormSchema from "../database/model/StudentFormSchema";
 import { uploadS3Image } from "../../utils/s3/s3";
 import { Favourite } from "../database/model/favourites";
 
+
 export class UserRepository implements IUserRepository {
   async findUserExists(email: string) {
     const user = await User.findOne({ email });
@@ -176,16 +177,6 @@ async studentFormRepo(values: any, files: any) {
     // Upload each file to S3 and get the public URL
     const uploadedFiles: Record<string, string> = {};
 
-    for (const field of requiredFields) {
-      const file = files[field][0];
-      const uploadResult = await uploadS3Image(file);
-
-      if (!uploadResult?.Location) {
-        throw new Error(`Failed to upload ${field}: ${uploadResult?.msg}`);
-      }
-
-      uploadedFiles[field] = uploadResult.Location; // S3 file URL
-    }
 
     // Create a new student form with S3 URLs
     const studentFormData = {
@@ -243,18 +234,6 @@ async favouritesRepository(userId: string, favourites: number[]) {
       "residencyPermit",
     ];
 
-    for (const field of fileFields) {
-      if (files[field] && files[field][0]) {
-        const file = files[field][0];
-        const uploadResult = await uploadS3Image(file);
-
-        if (!uploadResult?.Location) {
-          throw new Error(`Failed to upload ${field}: ${uploadResult?.msg}`);
-        }
-
-        updateData[field] = uploadResult.Location; // Save URL
-      }
-    }
 
     const updatedForm = await StudentFormSchema.findByIdAndUpdate(id, updateData, {
       new: true, // Return the updated document

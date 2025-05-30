@@ -3,14 +3,30 @@ import { IuserUsecase } from "../../application/interface/IuserUsecase";
 import util from 'util';
 import { sendStudentConfirmationMail } from "../../utils/studentFromMail";
 
+import util from "util";
+import checkoutNodeJssdk from "@paypal/checkout-server-sdk";
+import { paypalClient } from "../../utils/paypalClient";
+
 export class UserController {
   constructor(private userUsecase: IuserUsecase) {}
 
-  registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  registerUser = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      console.log('userData', req.body.userData)
-      const { firstname, lastname, email, password, phonenumber, role } = req.body.userData;
-      const values = { firstname, lastname, email, password, phonenumber, role };
+      console.log("userData", req.body.userData);
+      const { firstname, lastname, email, password, phonenumber, role } =
+        req.body.userData;
+      const values = {
+        firstname,
+        lastname,
+        email,
+        password,
+        phonenumber,
+        role,
+      };
 
       const existingUser = await this.userUsecase.userExists(email);
 
@@ -19,68 +35,80 @@ export class UserController {
         res.status(400).json({ message: "User already exists" });
         return;
       }
-      console.log('ssssssssssssssss')
+      console.log("ssssssssssssssss");
       const response = await this.userUsecase.registerUser(values);
       res.status(200).json({ message: response });
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  otpConfirm = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  otpConfirm = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       console.log("OTP Controller working");
       const values = req.body;
       const user = await this.userUsecase.otpVerification(values);
-      
+
       console.log("User data:", user);
       if (!user) {
         res.status(400).json({ message: "Invalid or expired OTP" });
         return;
       }
-      
-      res.status(200).json({ 
-        message: "OTP Verification Successful", 
-        user 
+
+      res.status(200).json({
+        message: "OTP Verification Successful",
+        user,
       });
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  login = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       console.log("Login endpoint working");
       const { email, password } = req.body;
-console.log('email', email)
-console.log('password',  password)
+      console.log("email", email);
+      console.log("password", password);
       const result = await this.userUsecase.loginVerification(email, password);
       console.log("Login result:", result);
 
       if (result && "error" in result) {
         res.status(400).json({ error: result.error });
         return;
-      } 
-      
+      }
+
       if (result) {
-        res.status(200).json({ 
-          user: result.userDoc, 
-          token: result.token 
+        res.status(200).json({
+          user: result.userDoc,
+          token: result.token,
         });
         return;
       }
-      
+
       res.status(400).json({ message: "Unexpected error occurred" });
     } catch (error) {
       console.error("Error during login:", error);
       next(error);
     }
-  }
+  };
 
-  getUserID = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getUserID = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       // const userId = req.usersData?.id;
-      const userId = '';
+      const userId = "";
 
       if (!userId) {
         res.status(404).json({ message: "User ID not found" });
@@ -92,14 +120,18 @@ console.log('password',  password)
         res.status(404).json({ message: "User not found" });
         return;
       }
-      
+
       res.status(200).json({ user: result });
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  refreshToken = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       console.log("Refresh token endpoint working");
       const { oldToken } = req.body;
@@ -107,13 +139,13 @@ console.log('password',  password)
 
       if (result) {
         console.log("Refresh token result:", result);
-        res.status(200).json({ 
-          user: result.userDoc, 
-          token: result.token 
+        res.status(200).json({
+          user: result.userDoc,
+          token: result.token,
         });
         return;
       }
-      
+
       res.status(401).json({ message: "User does not exist" });
     } catch (error) {
       next(error);
@@ -183,11 +215,86 @@ studentForm = async (req: Request, res: Response, next: NextFunction): Promise<v
       success: true,
       message,
       data: result 
+  };
+
+  studentForm = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("🌐 studentForm is working");
+
+      // Uploaded files
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      console.log(
+        "📦 Form Body:",
+        util.inspect(req.body, { showHidden: false, depth: null, colors: true })
+      );
+      console.log("📁 Uploaded Files:", files);
+
+      const result = await this.userUsecase.studentFormUsecase(req.body, files);
+
+      // Determine if this was an update or creation
+      const isUpdate = result?.__v !== undefined && result.__v > 0; // Check if document has been versioned
+      const message = isUpdate
+        ? "Student form updated successfully!"
+        : "Registration submitted successfully! Your form has been sent to the admin for review.!";
+
+      res.status(200).json({
+        success: true,
+        message,
+        data: result,
+      });
+    } catch (error) {
+      console.error("❌ Error in studentForm:", error);
+      next(error);
+    }
+  };
+  createOrder = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    console.log('create-order route is working' )
+    const request = new checkoutNodeJssdk.orders.OrdersCreateRequest();
+    console.log('request', request)
+    request.prefer("return=representation");
+    request.requestBody({
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          amount: {
+            currency_code: "USD",
+            value: "10.00",
+          },
+        },
+      ],
+
     });
-  } catch (error) {
-    console.error('❌ Error in studentForm:', error);
-    next(error);
+
+    try {
+      const order = await paypalClient().execute(request);
+      console.log('order', order)
+      res.json({ id: order.result.id });
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).send(err.message);
+    }
+  };
+  captureOrder = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+      const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(req.params.orderId);
+  try {
+    const capture = await paypalClient().execute(request);
+    res.json({ capture: capture.result });
+  } catch (err: any) {
+    console.error('PayPal Capture Error:', err);
+    res.status(500).send(err.message || 'Failed to capture PayPal order');
   }
-}
-  
+
+  };
 }

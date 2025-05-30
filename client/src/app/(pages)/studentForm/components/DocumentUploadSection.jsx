@@ -70,7 +70,7 @@ const DocumentUploadSection = ({onDocumentsUpdate, initialDocuments}) => {
       key: 'residencyPermit',
       title: 'Residency Permit',
       description: 'Required for international students',
-      required: false,
+      required: true,
       icon: Shield,
       accept: '.pdf,.jpg,.jpeg,.png',
       maxSize: '10MB',
