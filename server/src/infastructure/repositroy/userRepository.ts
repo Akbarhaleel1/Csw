@@ -220,7 +220,7 @@ async favouritesRepository(userId: string, favourites: number[]) {
       { upsert: true, new: true }
     );
 
-    return updated?.favourites || [];
+    return updated || [];
   } catch (error) {
     console.error('Error updating favourites:', error);
     throw new Error('Failed to update favourites');

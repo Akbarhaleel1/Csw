@@ -13,9 +13,6 @@ interface IStudentForm extends Document {
   state: string;
   zipCode: string;
   country: string;
-  studentId: string;
-  program: string;
-  yearOfStudy: string;
   emergencyContact: string;
   emergencyPhone: string;
   personalPhoto: string;
@@ -40,9 +37,6 @@ const StudentFormSchema: Schema = new Schema({
   state: { type: String, required: true },
   zipCode: { type: String, required: true },
   country: { type: String, required: true },
-  studentId: { type: String, required: true, unique: true },
-  program: { type: String, required: true },
-  yearOfStudy: { type: String, required: true },
   emergencyContact: { type: String, required: true },
   emergencyPhone: { type: String, required: true },
   personalPhoto: { type: String, required: true },

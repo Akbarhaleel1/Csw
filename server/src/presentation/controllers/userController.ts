@@ -139,6 +139,7 @@ console.log('password',  password)
 
         // Process the favourites using your use case
         const result = await this.userUsecase.favouritesUseCase(userId, favorites);
+        console.log("Favourites endpoint processing result",result);
 
         if (!result) {
             res.status(404).json({ message: "User does not exist or operation failed" });
@@ -168,9 +169,11 @@ studentForm = async (req: Request, res: Response, next: NextFunction): Promise<v
     console.log('📁 Uploaded Files:', files);
 
     const result = await this.userUsecase.studentFormUsecase(req.body, files);
+    console.log('📁 result Files:', result);
 
     // Determine if this was an update or creation
     const isUpdate = result?.__v !== undefined && result.__v > 0; // Check if document has been versioned
+
     const message = isUpdate 
       ? "Student form updated successfully!" 
       : "Registration submitted successfully! Your form has been sent to the admin for review.!";
