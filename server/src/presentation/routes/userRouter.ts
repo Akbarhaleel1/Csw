@@ -29,5 +29,7 @@ router.post('/signup', (req, res, next) => controller.registerUser(req, res, nex
 router.post('/verify-otp', (req, res, next) => controller.otpConfirm(req, res, next));
 router.post('/login', (req, res, next) => controller.login(req, res, next));
 router.post('/refreshToken', (req, res, next) => controller.refreshToken(req, res, next));
+router.post('/create-order', (req, res, next) => controller.createOrder(req, res, next));
+router.post('capture-order/:orderId', (req, res, next) => controller.captureOrder(req, res, next));
 
 export default router;
