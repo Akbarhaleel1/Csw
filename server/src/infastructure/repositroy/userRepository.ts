@@ -9,6 +9,8 @@ import { User } from "../database/model/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
 import bcrypt from "bcrypt";
 import StudentFormSchema from "../database/model/StudentFormSchema";
+import { uploadS3Image } from "../../utils/s3/s3";
+import { Favourite } from "../database/model/favourites";
 
 export class UserRepository implements IUserRepository {
   async findUserExists(email: string) {
@@ -152,91 +154,119 @@ export class UserRepository implements IUserRepository {
       throw new Error("Invalid token payload");
     }
   }
-  async studentFormRepo(values: any, files: any) {
-    try {
-      console.log("studentFormRepo values is", values);
-      console.log("studentFormRepo files is", files);
+async studentFormRepo(values: any, files: any) {
+  try {
+    console.log("studentFormRepo values is", values);
+    console.log("studentFormRepo files is", files);
 
-      // Create a new student form document with proper typing
-      const studentFormData = {
-        ...values,
-        dateOfBirth: new Date(values.dateOfBirth), // Convert string to Date
-        personalPhoto: {
-          data: files.personalPhoto[0].buffer,
-          contentType: files.personalPhoto[0].mimetype,
-        },
-        passportCopy: {
-          data: files.passportCopy[0].buffer,
-          contentType: files.passportCopy[0].mimetype,
-        },
-        academicCertificate: {
-          data: files.academicCertificate[0].buffer,
-          contentType: files.academicCertificate[0].mimetype,
-        },
-        residencyPermit: {
-          data: files.residencyPermit[0].buffer,
-          contentType: files.residencyPermit[0].mimetype,
-        },
-      };
+    const requiredFields = [
+      "personalPhoto",
+      "passportCopy",
+      "academicCertificate",
+      "residencyPermit",
+    ];
 
-      const studentForm = new StudentFormSchema(studentFormData);
-      const savedForm = await studentForm.save();
-      console.log("Student form saved successfully:", savedForm);
-      return savedForm;
-    } catch (error) {
-      console.error("Error saving student form:", error);
-      throw error;
+    // Ensure all required files are provided
+    for (const field of requiredFields) {
+      if (!files[field] || !files[field][0]) {
+        throw new Error(`Missing required file: ${field}`);
+      }
     }
+
+    // Upload each file to S3 and get the public URL
+    const uploadedFiles: Record<string, string> = {};
+
+    for (const field of requiredFields) {
+      const file = files[field][0];
+      const uploadResult = await uploadS3Image(file);
+
+      if (!uploadResult?.Location) {
+        throw new Error(`Failed to upload ${field}: ${uploadResult?.msg}`);
+      }
+
+      uploadedFiles[field] = uploadResult.Location; // S3 file URL
+    }
+
+    // Create a new student form with S3 URLs
+    const studentFormData = {
+      ...values,
+      dateOfBirth: new Date(values.dateOfBirth),
+      personalPhoto: uploadedFiles.personalPhoto,
+      passportCopy: uploadedFiles.passportCopy,
+      academicCertificate: uploadedFiles.academicCertificate,
+      residencyPermit: uploadedFiles.residencyPermit,
+    };
+
+    const studentForm = new StudentFormSchema(studentFormData);
+    const savedForm = await studentForm.save();
+
+    console.log("Student form saved successfully:", savedForm);
+    return savedForm;
+  } catch (error) {
+    console.error("Error saving student form:", error);
+    throw error;
   }
+}
+
 
   async findStudentFormByEmail(email: string) {
     return await StudentFormSchema.findOne({ email });
   }
+async favouritesRepository(userId: string, favourites: number[]) {
+  try {
+    const updated = await Favourite.findOneAndUpdate(
+      { userId },
+      { favourites },
+      { upsert: true, new: true }
+    );
 
-  async updateStudentForm(id: string, values: any, files: any) {
-    try {
-      const updateData: any = {
-        ...values,
-        dateOfBirth: new Date(values.dateOfBirth),
-      };
-
-      // Only update files if they are provided
-      if (files.personalPhoto) {
-        updateData.personalPhoto = {
-          data: files.personalPhoto[0].buffer,
-          contentType: files.personalPhoto[0].mimetype,
-        };
-      }
-      if (files.passportCopy) {
-        updateData.passportCopy = {
-          data: files.passportCopy[0].buffer,
-          contentType: files.passportCopy[0].mimetype,
-        };
-      }
-      if (files.academicCertificate) {
-        updateData.academicCertificate = {
-          data: files.academicCertificate[0].buffer,
-          contentType: files.academicCertificate[0].mimetype,
-        };
-      }
-      if (files.residencyPermit) {
-        updateData.residencyPermit = {
-          data: files.residencyPermit[0].buffer,
-          contentType: files.residencyPermit[0].mimetype,
-        };
-      }
-
-      const updatedForm = await StudentFormSchema.findByIdAndUpdate(
-        id,
-        updateData,
-        { new: true } // Return the updated document
-      );
-
-      console.log("Student form updated successfully:", updatedForm);
-      return updatedForm;
-    } catch (error) {
-      console.error("Error updating student form:", error);
-      throw error;
-    }
+    return updated || [];
+  } catch (error) {
+    console.error('Error updating favourites:', error);
+    throw new Error('Failed to update favourites');
   }
+}
+
+
+ async updateStudentForm(id: string, values: any, files: any) {
+  try {
+    const updateData: any = {
+      ...values,
+      dateOfBirth: new Date(values.dateOfBirth),
+    };
+
+    // Handle optional file updates: upload to S3 if provided
+    const fileFields = [
+      "personalPhoto",
+      "passportCopy",
+      "academicCertificate",
+      "residencyPermit",
+    ];
+
+    for (const field of fileFields) {
+      if (files[field] && files[field][0]) {
+        const file = files[field][0];
+        const uploadResult = await uploadS3Image(file);
+
+        if (!uploadResult?.Location) {
+          throw new Error(`Failed to upload ${field}: ${uploadResult?.msg}`);
+        }
+
+        updateData[field] = uploadResult.Location; // Save URL
+      }
+    }
+
+    const updatedForm = await StudentFormSchema.findByIdAndUpdate(id, updateData, {
+      new: true, // Return the updated document
+    });
+
+    console.log("Student form updated successfully:", updatedForm);
+    return updatedForm;
+  } catch (error) {
+    console.error("Error updating student form:", error);
+    throw error;
+ }
+ 
+}
+
 }

@@ -31,5 +31,6 @@ router.post('/login', (req, res, next) => controller.login(req, res, next));
 router.post('/refreshToken', (req, res, next) => controller.refreshToken(req, res, next));
 router.post('/create-order', (req, res, next) => controller.createOrder(req, res, next));
 router.post('capture-order/:orderId', (req, res, next) => controller.captureOrder(req, res, next));
+router.post('/favourites', (req, res, next) => controller.favourites(req, res, next));
 
 export default router;

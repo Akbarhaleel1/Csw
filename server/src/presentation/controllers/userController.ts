@@ -3,6 +3,7 @@ import { IuserUsecase } from "../../application/interface/IuserUsecase";
 import util from "util";
 import checkoutNodeJssdk from "@paypal/checkout-server-sdk";
 import { paypalClient } from "../../utils/paypalClient";
+import { sendStudentConfirmationMail } from "../../utils/studentFromMail";
 
 export class UserController {
   constructor(private userUsecase: IuserUsecase) {}
@@ -149,83 +150,123 @@ export class UserController {
     }
   };
 
-  studentForm = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+ favourites = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      console.log("🌐 studentForm is working");
+        const { userId, favorites } = req.body;
 
-      // Uploaded files
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      console.log(
-        "📦 Form Body:",
-        util.inspect(req.body, { showHidden: false, depth: null, colors: true })
-      );
-      console.log("📁 Uploaded Files:", files);
+        // Validate input
+        if (!userId || !Array.isArray(favorites)) {
+            res.status(400).json({ error: 'User ID and favorites IDs are required' });
+            return; 
+        }
 
-      const result = await this.userUsecase.studentFormUsecase(req.body, files);
+        // Check if favorites IDs are valid numbers
+        if (favorites.some(id => typeof id !== 'number')) {
+            res.status(400).json({ error: 'favorites IDs must be numbers' });
+            return;
+        }
 
-      // Determine if this was an update or creation
-      const isUpdate = result?.__v !== undefined && result.__v > 0; // Check if document has been versioned
-      const message = isUpdate
-        ? "Student form updated successfully!"
-        : "Registration submitted successfully! Your form has been sent to the admin for review.!";
+        console.log("Favourites endpoint processing request");
 
-      res.status(200).json({
-        success: true,
-        message,
-        data: result,
-      });
+        // Process the favourites using your use case
+        const result = await this.userUsecase.favouritesUseCase(userId, favorites);
+        console.log("Favourites endpoint processing result",result);
+
+        if (!result) {
+            res.status(404).json({ message: "User does not exist or operation failed" });
+            return;
+        }
+
+        // Success response
+        res.status(200).json({
+            success: true,
+            message: "Favourites updated successfully",
+            data: result
+        });
+
     } catch (error) {
-      console.error("❌ Error in studentForm:", error);
-      next(error);
+        console.error("Error in favourites endpoint:", error);
+        next(error); 
     }
-  };
-  createOrder = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    console.log('create-order route is working' )
-    const request = new checkoutNodeJssdk.orders.OrdersCreateRequest();
-    console.log('request', request)
-    request.prefer("return=representation");
-    request.requestBody({
-      intent: "CAPTURE",
-      purchase_units: [
-        {
-          amount: {
-            currency_code: "USD",
-            value: "10.00",
-          },
-        },
-      ],
-    });
+}
 
-    try {
-      const order = await paypalClient().execute(request);
-      console.log('order', order)
-      res.json({ id: order.result.id });
-    } catch (err: any) {
-      console.error(err);
-      res.status(500).send(err.message);
-    }
-  };
-  captureOrder = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-      const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(req.params.orderId);
-  try {
-    const capture = await paypalClient().execute(request);
-    res.json({ capture: capture.result });
-  } catch (err: any) {
-    console.error('PayPal Capture Error:', err);
-    res.status(500).send(err.message || 'Failed to capture PayPal order');
-  }
+      studentForm = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+      ): Promise<void> => {
+        try {
+          console.log("🌐 studentForm is working");
 
-  };
+          // Uploaded files
+          const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+          console.log(
+            "📦 Form Body:",
+            util.inspect(req.body, { showHidden: false, depth: null, colors: true })
+          );
+          console.log("📁 Uploaded Files:", files);
+
+          const result = await this.userUsecase.studentFormUsecase(req.body, files);
+  
+
+          // Determine if this was an update or creation
+          const isUpdate = result?.__v !== undefined && result.__v > 0; // Check if document has been versioned
+          const message = isUpdate
+            ? "Student form updated successfully!"
+            : "Registration submitted successfully! Your form has been sent to the admin for review.!";
+
+          res.status(200).json({
+            success: true,
+            message,
+            data: result,
+          });
+        } catch (error) {
+          console.error("❌ Error in studentForm:", error);
+          next(error);
+        }
+      };
+      createOrder = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+      ): Promise<void> => {
+        console.log('create-order route is working')
+        const request = new checkoutNodeJssdk.orders.OrdersCreateRequest();
+        console.log('request', request)
+        request.prefer("return=representation");
+        request.requestBody({
+          intent: "CAPTURE",
+          purchase_units: [
+            {
+              amount: {
+                currency_code: "USD",
+                value: "10.00",
+              },
+            },
+          ],
+        });
+
+        try {
+          const order = await paypalClient().execute(request);
+          console.log('order', order)
+          res.json({ id: order.result.id });
+        } catch (err: any) {
+          console.error(err);
+          res.status(500).send(err.message);
+        }
+      };
+      captureOrder = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+      ): Promise<void> => {
+        const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(req.params.orderId);
+        try {
+          const capture = await paypalClient().execute(request);
+          res.json({ capture: capture.result });
+        } catch (err: any) {
+          console.error('PayPal Capture Error:', err);
+          res.status(500).send(err.message || 'Failed to capture PayPal order');
+        }
+      };
 }

@@ -80,4 +80,10 @@ async studentFormUsecase(values: any, files: any) {
         return result;
     }
 }
+async favouritesUseCase(userId:string,favourites:number[]) {
+   if (favourites.length > 5) {
+      throw new Error('Maximum 5 favourites allowed');
+    }
+    return this.repository.favouritesRepository(userId, favourites);
+}
 }
