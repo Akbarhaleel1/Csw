@@ -1,8 +1,6 @@
-
-
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   FileText,
   Users,
@@ -11,120 +9,168 @@ import {
   Download,
   Eye,
   Bell,
-  Filter,
   MoreHorizontal,
   Calendar,
   Mail,
   Phone,
+  X,
 } from "lucide-react"
 import "./admin.css"
+import axios from "axios"
 
-// Mock data
-const mockApplications = [
-  {
-    id: "APP-2024-001",
-    studentName: "John Smith",
-    email: "john.smith@email.com",
-    phone: "+1 (555) 123-4567",
-    status: "pending",
-    submissionDate: "2024-01-15",
-    program: "Computer Science",
-    country: "United States",
-    avatar: "/placeholder.svg?height=40&width=40",
-    documents: [
-      { name: "Passport", type: "pdf", uploaded: true, size: "2.4 MB" },
-      { name: "Academic Transcripts", type: "pdf", uploaded: true, size: "1.8 MB" },
-      { name: "English Proficiency Test", type: "pdf", uploaded: true, size: "956 KB" },
-      { name: "Statement of Purpose", type: "pdf", uploaded: true, size: "1.2 MB" },
-      { name: "Financial Documents", type: "pdf", uploaded: true, size: "3.1 MB" },
-    ],
-  },
-  {
-    id: "APP-2024-002",
-    studentName: "Sarah Johnson",
-    email: "sarah.johnson@email.com",
-    phone: "+44 20 7946 0958",
-    status: "pending",
-    submissionDate: "2024-01-14",
-    program: "Business Administration",
-    country: "United Kingdom",
-    avatar: "/placeholder.svg?height=40&width=40",
-    documents: [
-      { name: "Passport", type: "pdf", uploaded: true, size: "2.1 MB" },
-      { name: "Academic Transcripts", type: "pdf", uploaded: true, size: "1.5 MB" },
-      { name: "English Proficiency Test", type: "pdf", uploaded: false, size: "0 MB" },
-      { name: "Statement of Purpose", type: "pdf", uploaded: true, size: "1.1 MB" },
-    ],
-  },
-  {
-    id: "APP-2024-003",
-    studentName: "Michael Brown",
-    email: "michael.brown@email.com",
-    phone: "+61 2 9374 4000",
-    status: "approved",
-    submissionDate: "2024-01-13",
-    program: "Engineering",
-    country: "Australia",
-    avatar: "/placeholder.svg?height=40&width=40",
-    documents: [
-      { name: "Passport", type: "pdf", uploaded: true, size: "2.8 MB" },
-      { name: "Academic Transcripts", type: "pdf", uploaded: true, size: "2.2 MB" },
-      { name: "English Proficiency Test", type: "pdf", uploaded: true, size: "1.1 MB" },
-      { name: "Statement of Purpose", type: "pdf", uploaded: true, size: "1.4 MB" },
-    ],
-  },
-]
-
-const mockNotifications = [
-  { id: 1, message: "New application submitted by John Smith", time: "5 minutes ago", type: "new" },
-  { id: 2, message: "Sarah Johnson uploaded missing documents", time: "1 hour ago", type: "update" },
-  { id: 3, message: "Michael Brown's application approved", time: "2 hours ago", type: "approved" },
-  { id: 4, message: "Document verification completed for Emma Wilson", time: "3 hours ago", type: "verified" },
-]
+const DEFAULT_AVATAR = "https://t3.ftcdn.net/jpg/03/91/19/22/360_F_391192211_2w5pQpFV1aozYQhcIw3FqA35vuTxJKrB.jpg";
 
 export default function AdminDashboard() {
-  const [selectedApplication, setSelectedApplication] = useState(mockApplications[0])
+  const [applications, setApplications] = useState([])
+  const [selectedApplication, setSelectedApplication] = useState(null)
   const [rejectionReason, setRejectionReason] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [viewDocument, setViewDocument] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  useEffect(() => {
+    const fetchStudentsData = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/AdminDocumentReview');
+        setApplications(response.data.result);
+        if (response.data.result.length > 0) {
+          setSelectedApplication(response.data.result[0]);
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching student data:', error);
+        setError(error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchStudentsData();
+  }, []);
 
   const stats = {
-    pending: mockApplications.filter((app) => app.status === "pending").length,
-    approved: mockApplications.filter((app) => app.status === "approved").length,
-    rejected: mockApplications.filter((app) => app.status === "rejected").length,
-    total: mockApplications.length,
+    pending: applications.filter((app) => app.status === "pending").length,
+    approved: applications.filter((app) => app.status === "approved").length,
+    rejected: applications.filter((app) => app.status === "rejected").length,
+    total: applications.length,
   }
 
-  const handleApprove = async () => {
+  const handleApprove = async (applicationId) => {
     setIsProcessing(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setApplications(applications.map(app => 
+        app._id === applicationId ? { ...app, status: "approved" } : app
+      ));
+      setSelectedApplication(prev => prev._id === applicationId ? { ...prev, status: "approved" } : prev);
+    } finally {
       setIsProcessing(false)
-      // Update application status logic here
-    }, 2000)
+    }
   }
 
-  const handleReject = async () => {
+  const handleReject = async (applicationId) => {
     if (!rejectionReason.trim()) return
     setIsProcessing(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsProcessing(false)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setApplications(applications.map(app => 
+        app._id === applicationId ? { ...app, status: "rejected", reasons: rejectionReason } : app
+      ));
+      setSelectedApplication(prev => prev._id === applicationId ? { ...prev, status: "rejected", reasons: rejectionReason } : prev);
       setRejectionReason("")
-      // Update application status logic here
-    }, 2000)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
-  const getInitials = (name) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  }
+
+  const documentTypes = [
+    { name: "Passport", key: "passportCopy" },
+    { name: "Academic Certificate", key: "academicCertificate" },
+    { name: "Residency Permit", key: "residencyPermit" },
+    { name: "Personal Photo", key: "personalPhoto" }
+  ];
+
+  const handleDownload = (url, filename) => {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename || 'document';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+      })
+      .catch(error => console.error('Error downloading file:', error));
+  };
+
+  const handleViewDocument = (url) => {
+    setViewDocument(url);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setViewDocument(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="dashboard">
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Loading applications...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard">
+        <div className="error-state">
+          <h3>Error loading data</h3>
+          <p>{error.message}</p>
+          <button onClick={() => window.location.reload()}>Try Again</button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="dashboard">
-      {/* Header */}
+      {/* Document View Modal */}
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>View Document</h3>
+              <button onClick={closeModal} className="modal-close">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="modal-content">
+              {viewDocument && (
+                <iframe 
+                  src={viewDocument} 
+                  title="Document Viewer"
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="header">
         <div className="header-content">
           <div className="header-left">
@@ -139,7 +185,6 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="header-actions">
-
             <div className="notification-bell">
               <div className="notification-indicator"></div>
             </div>
@@ -148,7 +193,6 @@ export default function AdminDashboard() {
       </header>
 
       <div className="main-layout">
-        {/* Sidebar - Applications List */}
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-title">
@@ -156,7 +200,6 @@ export default function AdminDashboard() {
               <span className="badge secondary">{stats.pending} pending</span>
             </div>
 
-            {/* Stats Cards */}
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-number pending">{stats.pending}</div>
@@ -171,30 +214,33 @@ export default function AdminDashboard() {
 
           <div className="sidebar-content">
             <div className="applications-list">
-              {mockApplications.map((application) => (
+              {applications.map((application) => (
                 <div
-                  key={application.id}
-                  className={`application-card ${selectedApplication?.id === application.id ? "selected" : ""}`}
+                  key={application._id}
+                  className={`application-card ${selectedApplication?._id === application._id ? "selected" : ""}`}
                   onClick={() => setSelectedApplication(application)}
                 >
                   <div className="application-header">
                     <div className="avatar">
-                      {application.avatar ? (
-                        <img src={application.avatar || "/placeholder.svg"} alt={application.studentName} />
-                      ) : (
-                        getInitials(application.studentName)
-                      )}
+                      <img 
+                        src={application.personalPhoto || DEFAULT_AVATAR} 
+                        alt={`${application.firstName} ${application.lastName}`}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = DEFAULT_AVATAR;
+                        }}
+                      />
                     </div>
                     <div className="application-info">
                       <div className="application-top">
-                        <h3 className="application-name">{application.studentName}</h3>
+                        <h3 className="application-name">{application.firstName} {application.lastName}</h3>
                         <span className={`badge ${application.status}`}>{application.status}</span>
                       </div>
-                      <p className="application-program">{application.program}</p>
-                      <p className="application-id">{application.id}</p>
+                      <p className="application-program">{application.country}</p>
+                      <p className="application-id">APP-{application._id.slice(-6).toUpperCase()}</p>
                       <div className="application-date">
                         <Calendar size={12} />
-                        {application.submissionDate}
+                        {formatDate(application.createdAt)}
                       </div>
                     </div>
                   </div>
@@ -204,27 +250,25 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="main-content">
           {selectedApplication ? (
             <div className="content-area">
-              {/* Student Info Header */}
               <div className="card">
                 <div className="card-header">
                   <div className="student-header">
                     <div className="student-info">
                       <div className="student-avatar">
-                        {selectedApplication.avatar ? (
-                          <img
-                            src={selectedApplication.avatar || "/placeholder.svg"}
-                            alt={selectedApplication.studentName}
-                          />
-                        ) : (
-                          getInitials(selectedApplication.studentName)
-                        )}
+                        <img 
+                          src={selectedApplication.personalPhoto || DEFAULT_AVATAR} 
+                          alt={`${selectedApplication.firstName} ${selectedApplication.lastName}`}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = DEFAULT_AVATAR;
+                          }}
+                        />
                       </div>
                       <div className="student-details">
-                        <h2>{selectedApplication.studentName}</h2>
+                        <h2>{selectedApplication.firstName} {selectedApplication.lastName}</h2>
                         <div className="student-contact">
                           <div className="contact-item">
                             <Mail size={16} />
@@ -239,14 +283,13 @@ export default function AdminDashboard() {
                     </div>
                     <div className="student-meta">
                       <span className={`badge ${selectedApplication.status}`}>{selectedApplication.status}</span>
-                      <p>{selectedApplication.program}</p>
                       <p>{selectedApplication.country}</p>
+                      <p>{selectedApplication.city}, {selectedApplication.state}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Documents Grid */}
               <div className="card">
                 <div className="card-header">
                   <h3 className="card-title">Documents</h3>
@@ -254,22 +297,28 @@ export default function AdminDashboard() {
                 </div>
                 <div className="card-content">
                   <div className="documents-grid">
-                    {selectedApplication.documents.map((document, index) => (
-                      <div key={index} className={`document-card ${document.uploaded ? "uploaded" : "missing"}`}>
+                    {documentTypes.map((doc, index) => (
+                      <div key={index} className={`document-card ${selectedApplication[doc.key] ? "uploaded" : "missing"}`}>
                         <div className="document-header">
-                          <div className={`document-icon ${document.uploaded ? "uploaded" : "missing"}`}>
+                          <div className={`document-icon ${selectedApplication[doc.key] ? "uploaded" : "missing"}`}>
                             <FileText size={20} />
                           </div>
                           <div className="document-info">
-                            <h4 className="document-name">{document.name}</h4>
-                            <p className="document-size">{document.size}</p>
-                            {document.uploaded ? (
+                            <h4 className="document-name">{doc.name}</h4>
+                            <p className="document-size">{selectedApplication[doc.key] ? "Available" : "Not Uploaded"}</p>
+                            {selectedApplication[doc.key] ? (
                               <div className="document-actions">
-                                <button className="btn btn-outline btn-sm">
+                                <button
+                                  onClick={() => handleViewDocument(selectedApplication[doc.key])}
+                                  className="btn btn-outline btn-sm"
+                                >
                                   <Eye size={12} />
                                   View
                                 </button>
-                                <button className="btn btn-outline btn-sm">
+                                <button
+                                  onClick={() => handleDownload(selectedApplication[doc.key], `${doc.name}-${selectedApplication.firstName}`)}
+                                  className="btn btn-outline btn-sm"
+                                >
                                   <Download size={12} />
                                   Download
                                 </button>
@@ -285,7 +334,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Decision Panel */}
               {selectedApplication.status === "pending" && (
                 <div className="card">
                   <div className="card-header">
@@ -294,7 +342,11 @@ export default function AdminDashboard() {
                   </div>
                   <div className="card-content">
                     <div className="decision-actions">
-                      <button onClick={handleApprove} disabled={isProcessing} className="btn btn-success">
+                      <button 
+                        onClick={() => handleApprove(selectedApplication._id)} 
+                        disabled={isProcessing} 
+                        className="btn btn-success"
+                      >
                         {isProcessing ? (
                           <>
                             <div className="spinner"></div>
@@ -309,7 +361,7 @@ export default function AdminDashboard() {
                       </button>
                       <button
                         className="btn btn-danger"
-                        onClick={handleReject}
+                        onClick={() => handleReject(selectedApplication._id)}
                         disabled={isProcessing || !rejectionReason.trim()}
                       >
                         <XCircle size={16} />
@@ -334,14 +386,13 @@ export default function AdminDashboard() {
             <div className="empty-state">
               <div className="empty-state-content">
                 <Users size={48} color="#9ca3af" />
-                <h3>Select an Application</h3>
-                <p>Choose an application from the sidebar to review documents and make decisions.</p>
+                <h3>No Applications Found</h3>
+                <p>There are currently no applications to review.</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Right Sidebar - Notifications */}
         <div className="right-sidebar">
           <div className="sidebar-section-header">
             <h3>Recent Activity</h3>
@@ -351,15 +402,21 @@ export default function AdminDashboard() {
           </div>
 
           <div className="activity-list">
-            {mockNotifications.map((notification) => (
-              <div key={notification.id} className="activity-item">
+            {applications.slice(0, 4).map((application) => (
+              <div key={application._id} className="activity-item">
                 <div className="activity-header">
                   <div className="activity-icon">
                     <Bell size={12} color="#2563eb" />
                   </div>
                   <div className="activity-content">
-                    <p className="activity-message">{notification.message}</p>
-                    <p className="activity-time">{notification.time}</p>
+                    <p className="activity-message">
+                      {application.status === "approved" 
+                        ? `${application.firstName}'s application approved`
+                        : application.status === "rejected"
+                        ? `${application.firstName}'s application rejected`
+                        : `New application from ${application.firstName}`}
+                    </p>
+                    <p className="activity-time">{formatDate(application.updatedAt)}</p>
                   </div>
                 </div>
               </div>

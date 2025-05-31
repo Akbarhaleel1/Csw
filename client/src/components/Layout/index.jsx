@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import Lenis from 'lenis';
 
 import StyledComponentsRegistry from '../../../libs/registry';
@@ -8,6 +9,7 @@ import { GlobalStyles } from './GlobalStyles';
 import { Footer, Header } from '..';
 
 const Layout = ({ children }) => {
+  const pathname = usePathname();
   const lenisRef = useRef(null);
 
   useEffect(() => {
@@ -30,13 +32,15 @@ const Layout = ({ children }) => {
     };
   }, []);
 
+  const hideLayout = ['/login', '/signup','/AdminDocumentReview'];
+
   return (
     <StyledComponentsRegistry>
       <GlobalStyles />
       <div>
-        <Header />
+        {!hideLayout.includes(pathname) && <Header />}
         {children}
-        <Footer />
+        {!hideLayout.includes(pathname) && <Footer />}
       </div>
     </StyledComponentsRegistry>
   );

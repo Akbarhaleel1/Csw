@@ -32,5 +32,6 @@ router.post('/refreshToken', (req, res, next) => controller.refreshToken(req, re
 router.post('/create-order', (req, res, next) => controller.createOrder(req, res, next));
 router.post('capture-order/:orderId', (req, res, next) => controller.captureOrder(req, res, next));
 router.post('/favourites', (req, res, next) => controller.favourites(req, res, next));
+router.get('/AdminDocumentReview', (req, res, next) => controller.AdminDocumentReview(req, res, next));
 
 export default router;

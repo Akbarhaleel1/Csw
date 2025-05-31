@@ -86,4 +86,7 @@ async favouritesUseCase(userId:string,favourites:number[]) {
     }
     return this.repository.favouritesRepository(userId, favourites);
 }
+async AdminDocumentReviewUseCase() {
+    return this.repository.AdminDocumentReviewRepository();
+}
 }

@@ -17,4 +17,5 @@ export interface IuserUsecase {
     refreshTokenUsecase(oldToken:string): Promise<UserLogin| null>
     studentFormUsecase(values:string,files:any): any
     favouritesUseCase(userId:string,favorites:number[]): any
+    AdminDocumentReviewUseCase(): any
 }

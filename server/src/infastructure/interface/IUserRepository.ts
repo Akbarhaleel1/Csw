@@ -18,4 +18,5 @@ export interface IUserRepository {
     findStudentFormByEmail(email:string): Promise<any | null>
     updateStudentForm(id: string, values: any, files: any): Promise<any | null>
     favouritesRepository(userId:string,favorites:number[]): any
+    AdminDocumentReviewRepository(): any
 }

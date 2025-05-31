@@ -212,7 +212,7 @@ async studentFormRepo(values: any, files: any) {
   async findStudentFormByEmail(email: string) {
     return await StudentFormSchema.findOne({ email });
   }
-async favouritesRepository(userId: string, favourites: number[]) {
+async favouritesRepository(userId: string, favourites: number[]) {        
   try {
     const updated = await Favourite.findOneAndUpdate(
       { userId },
@@ -267,6 +267,17 @@ async favouritesRepository(userId: string, favourites: number[]) {
     throw error;
  }
  
+}
+
+ async AdminDocumentReviewRepository() {
+   try {
+     const response = await StudentFormSchema.find({});
+     console.log('AdminDocumentReviewRepository response is', response);
+     return response
+  } catch (error) {
+    console.error("Error updating student form:", error);
+    throw error;
+ }
 }
 
 }
