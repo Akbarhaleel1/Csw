@@ -8,6 +8,7 @@ import {
   JoinSection,
   OffersSection,
   UniversitySearch,
+  VideoTestimonialsPage,
 } from '@/components';
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
     <main>
       <HeroSection />
       <UniversitySearch/>
+      <VideoTestimonialsPage/>
       <Featured />
       <OffersSection />
       <FinancilaFreedom />
