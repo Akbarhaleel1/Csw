@@ -1,4 +1,5 @@
 import {
+  CountriesSection,
   FAQ,
   Featured,
   FinancialFuture,
@@ -17,6 +18,7 @@ export default function Home() {
       <HeroSection />
       <UniversitySearch/>
       <VideoTestimonialsPage/>
+      <CountriesSection/>
       <Featured />
       <OffersSection />
       <FinancilaFreedom />

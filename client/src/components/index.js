@@ -12,3 +12,4 @@ export { default as Footer } from './UI/Footer';
 export { default as MaskText } from './Common/MaskText';
 export { default as UniversitySearch } from './UI/UniversitySection';
 export { default as VideoTestimonialsPage } from './UI/Testimonials';
+export { default as CountriesSection } from './UI/CountriesSection';
